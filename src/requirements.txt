@@ -1,0 +1,8 @@
+pytorch_lightning
+torchmetrics
+h5py
+scipy
+scikit-learn
+matplotlib
+seaborn
+easydict
