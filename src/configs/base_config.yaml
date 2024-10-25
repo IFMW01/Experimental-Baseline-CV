@@ -1,0 +1,41 @@
+# Training parameters
+dataset: CIFAR10
+save_name: Base
+model_name: VGG9
+seed: [41, 91, 17] 
+batch_size: 256
+learning_rate: 0.01
+momentum: 0.9
+num_epochs: 85
+optimizer: SGD
+criterion: cross ent
+
+# Explicit reg
+dropout: 0.0
+weight_decay: 0.0
+aug: True
+
+
+# Model configuration
+models_dir: ../models
+vgg_config: vgg_config.json  
+resnet_config: resnet_config.yaml
+vit_congif: vit_config.yaml
+
+# Metrics
+metrics:
+  - acc
+  - ece
+  - loss
+
+# Other directories
+config_dir: ../configs
+
+cifar_dir: ../data/cifar
+imagenet_dir: ../data/imagenet
+
+wandb:
+  use_wandb: True
+  experiment_name: '' # overwritten in main.py
+  project: 'ViT_CIFAR_REDO_100'
+  entity: 'r252_project'

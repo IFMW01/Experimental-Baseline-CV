@@ -3,8 +3,6 @@ import numpy as np
 import torch
 import torchvision.datasets as cifar_datasets
 import torchvision.transforms as transforms
-import dataloaders.cifar_rand_lables as cifar_random_lables
-from datasets import load_dataset
 from autoaugment import CIFAR10Policy
 
 class DataLoaderManagerCIFAR:
@@ -106,3 +104,42 @@ class DataLoaderManagerCIFAR:
         worker_seed = torch.initial_seed() % 2**32
         np.random.seed(worker_seed)
         random.seed(worker_seed)
+
+# Taken from https://github.com/pluskid/fitting-random-labels/blob/master/cifar10_data.py
+
+class CIFARRandomLabelsBase:
+    """CIFAR10 dataset, with support for randomly corrupt labels.
+    Params
+    ------
+    num_classes: int
+      The number of classes in the dataset.
+    corrupt_prob: float
+      Default 0.0. The probability of a label being replaced with
+      random label.
+    """
+
+    def __init__(self, num_classes, corrupt_prob=0.0, **kwargs):
+        super(CIFARRandomLabelsBase, self).__init__(**kwargs)
+        self.n_classes = num_classes
+        if corrupt_prob > 0:
+            self.corrupt_labels(corrupt_prob)
+
+    def corrupt_labels(self, corrupt_prob):
+        labels = np.array(self.targets)
+        np.random.seed(12345)
+        mask = np.random.rand(len(labels)) <= corrupt_prob
+        rnd_labels = np.random.choice(self.n_classes, mask.sum())
+        labels[mask] = rnd_labels
+        # we need to explicitly cast the labels from npy.int64 to
+        # builtin int type, otherwise pytorch will fail...
+        labels = [int(x) for x in labels]
+
+        self.targets = labels
+
+
+def get_random_cifar_dataset(dataset, num_classes, corrupt_prob=0.0, **kwargs):
+
+    class CIFARRandomLabels(CIFARRandomLabelsBase, dataset):
+        pass
+
+    return CIFARRandomLabels(num_classes, corrupt_prob, **kwargs)
