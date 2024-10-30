@@ -1,14 +1,14 @@
 # Training parameters
 dataset: CIFAR10
 save_name: Base
-model_name: VGG9
+model_name: ResNet
 seed: [41, 91, 17] 
 batch_size: 256
 learning_rate: 0.01
 momentum: 0.9
 num_epochs: 85
 optimizer: SGD
-criterion: cross ent
+criterion: Cross-entropy
 
 # Explicit reg
 dropout: 0.0

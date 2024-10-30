@@ -5,7 +5,7 @@ import random
 from pathlib import Path
 from pprint import pprint
 import json
-
+import torch.optim as optim
 import numpy as np
 import torch
 import yaml
@@ -97,7 +97,7 @@ def main(seed=None, run_num=0):
 
     config = EasyDict(config)
 
-    config.models_dir = Path(config.models_dir) / args.dataset
+    config.models_dir = Path(config.models_dir) / config.dataset
 
     config.models_dir = (
         config.models_dir / args.save_name / str(seed)
@@ -112,14 +112,14 @@ def main(seed=None, run_num=0):
 
     print("Loading model")
 
-    if config.dataset.contains("CIFAR"):
-        data_loader_manager = CIFAR_dataloader(
+    if "CIFAR" in config.dataset:
+        data_loader_manager = CIFAR_dataloader.DataLoaderManagerCIFAR(
             config=config,
             dataset_name=config.dataset,
             seed=seed,
         )
-    elif config.dataset.contains("ImageNet"):
-        data_loader_manager = IMAGENET_dataloader(
+    elif "ImageNet" in config.dataset:
+        data_loader_manager = IMAGENET_dataloader.DataLoaderManagerImageNet(
             config=config,
             dataset_name=config.dataset,
             seed=seed,
@@ -137,14 +137,9 @@ def main(seed=None, run_num=0):
             vgg_config=config.config_dir / config.vgg_config,
         ).to(device)
     elif config.model_name.startswith("ResNet"):
-        n = (config_model.depth - 2) // 6
-        model = resnet_model.ResNet_cifar(resnet_model.BasicBlock, [n,n,n],data_loader_manager.num_classes,args.dropout).to(device)
+        n = (20 - 2) // 6
+        model = resnet_model.ResNet_cifar(resnet_model.BasicBlock, [n,n,n],data_loader_manager.num_classes,config.dropout).to(device)
     elif config.model_name.startswith("ViT"):
-
-        if args.dataset == 'CIFAR100':
-            num_classes = 100
-        else:
-            num_classes = 10
 
         model = vit_model.ViT(
         patch_height = config_model.patch_height,
@@ -162,12 +157,30 @@ def main(seed=None, run_num=0):
     else:
         raise NotImplementedError(f"Model {config.model_name} not implemented")
     
-    trainer = Trainer(
-        config=config,
-        model=model,
-        device=device,
-        num_classes=data_loader_manager.num_classes,
-        seed=seed,
+    learning_rate = config.learning_rate
+    momentum = config.momentum
+    if 'Cross-entropy' in config.criterion:
+        criterion = torch.nn.CrossEntropyLoss()
+    elif 'MSE' in config.criterion:
+        criterion = torch.nn.MSELoss
+    else:
+        raise ValueError("Only Cross-entropy and MSE are supported")
+    if 'SGD' in config.optimizer:
+        optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
+    elif 'Adam' in config.optimizer:
+         optimizer = optim.Adam(model.parameters(), lr=learning_rate, momentum=momentum)
+    else:
+        raise ValueError("Only SGD and Adam are supported")
+
+    trainer = Trainer.Trainer(
+        model = model,
+        train_loader = train_dataloader,
+        test_loader = test_dataloader, 
+        optimizer = optimizer,
+        criterion = criterion,
+        device = device,
+        n_epoch = config.num_epochs,
+        n_classes = data_loader_manager.num_classes
     )
 
     print("Random initialisation")

@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torchvision.datasets as cifar_datasets
 import torchvision.transforms as transforms
-from autoaugment import CIFAR10Policy
+# from autoaugment import CIFAR10Policy
 
 class DataLoaderManagerCIFAR:
     def __init__(
@@ -28,7 +28,7 @@ class DataLoaderManagerCIFAR:
             [
                 transforms.RandomCrop(32, padding=4, fill=128), # fill parameter needs torchvision installed from source
                 transforms.RandomHorizontalFlip(), 
-                CIFAR10Policy(), 
+                # CIFAR10Policy(), 
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
             ]
