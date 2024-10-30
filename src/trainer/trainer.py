@@ -6,17 +6,15 @@ from torchmetrics.classification import MulticlassCalibrationError
 
 # Trainer class used to train base and Naive models
 class Trainer():
-    def __init__(self,model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_epoch,n_classes,seed):
+    def __init__(self, model, train_loader, test_loader, optimizer, criterion, device, n_epoch,n_classes):
         self.model = model
         self.train_loader = train_loader
-        self.train_eval_loader = train_eval_loader
         self.test_loader = test_loader
         self.optimizer = optimizer
         self.criterion = criterion
         self.device = device
         self.n_epoch = n_epoch
         self.n_classes = n_classes
-        self.seed = seed
 
 # Evaluates performance obtaining loss, acc and ece
     def evaluate(self,dataloader):
@@ -46,8 +44,6 @@ class Trainer():
     
 # Training of the model
     def train(self):
-        
-        utils.set_seed(self.seed)
         training_sequence = {}
         train_ece = 0 
         test_ece = 0
