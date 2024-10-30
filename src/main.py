@@ -52,8 +52,8 @@ def set_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = True
 
 
 def get_device():
@@ -187,7 +187,7 @@ def main(seed=None, run_num=0):
     save_model(model, save_file_name="initialisation", save_dir=config.models_dir)
     training_sequence,model  = trainer.train()
     save_model(model, config.save_name, config.models_dir)
-    with open('{save_name}.json', 'w') as f:
+    with open(f'{config.models_dir}/{config.save_name}.json', 'w') as f:
         json.dump(training_sequence, f)
     print("Finished")
     

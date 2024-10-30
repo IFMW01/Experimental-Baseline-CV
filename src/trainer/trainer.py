@@ -2,6 +2,7 @@ import torch
 from tqdm import tqdm
 from copy import deepcopy
 import time
+import pandas as pd
 from torchmetrics.classification import MulticlassCalibrationError
 
 # Trainer class used to train base and Naive models
@@ -42,6 +43,36 @@ class Trainer():
         accuracy = 100 * correct / total
         return accuracy,model_loss, ece
     
+    def evaluate_test(self,dataloader):
+        self.model.eval()
+        model_loss = 0.0
+        correct = 0
+        total = 0
+        ece = 0
+        predictions = pd.DataFrame()
+        temp = pd.DataFrame()
+        ece = MulticlassCalibrationError(self.n_classes, n_bins=15, norm='l1')
+        for data, target in dataloader:
+            with torch.no_grad():
+                if data.device != self.device:
+                    data = data.to(self.device) 
+                if target.device != self.device:
+                    target = target.to(self.device) 
+                output = self.model(data)
+                loss = self.criterion(output, target)
+                softmax = torch.softmax(output, dim=1)
+                temp = pd.DataFrame(softmax.cpu().numpy()) 
+                predictions = pd.concat([predictions, temp], ignore_index=True)
+                ece.update(softmax,target)
+                model_loss += loss.item()
+                _, predicted = torch.max(output, 1)
+                total += target.size(0)
+                correct += (predicted == target).sum().item()
+        ece = ece.compute().item()
+        model_loss /= len(dataloader)
+        accuracy = 100 * correct / total
+        return accuracy,model_loss, ece, predictions
+    
 # Training of the model
     def train(self):
         training_sequence = {}
@@ -71,7 +102,7 @@ class Trainer():
 
             
             train_accuracy,train_loss,train_ece = self.evaluate(self.train_loader)
-            test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
+            test_accuracy,test_loss, test_ece,predictions= self.evaluate_test(self.test_loader)
 
             epoch_results['train accuracy'] = train_accuracy
             epoch_results['train loss'] = train_loss
@@ -80,6 +111,7 @@ class Trainer():
             epoch_results['test loss'] = test_loss
             epoch_results['test ece'] = test_ece
             epoch_results['training time'] = training_time
+            epoch_results['function'] = predictions.to_numpy().tolist()
             training_sequence[f'{epoch}'] = epoch_results
 
             if  epoch%10==0:
