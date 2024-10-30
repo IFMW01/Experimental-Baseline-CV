@@ -4,6 +4,7 @@ import os
 import random
 from pathlib import Path
 from pprint import pprint
+import json
 
 import numpy as np
 import torch
@@ -27,6 +28,19 @@ def options_parser():
         type=str,
         help="Path to config file",
     )
+    parser.add_argument(
+        "--model_config",
+        required=True,
+        type=str,
+        help="Save Name of project",
+    )
+    parser.add_argument(
+        "--save_name",
+        required=True,
+        type=str,
+        help="Save Name of project",
+    )
+
 
     args = parser.parse_args()
 
@@ -73,6 +87,9 @@ def main(seed=None, run_num=0):
 
     with open(args.config_file, "r") as file:
         config = yaml.safe_load(file)
+    
+    with open(args.model_config, "r") as file:
+        config_model = yaml.safe_load(file)
 
     config.update(vars(args))
 
@@ -114,19 +131,14 @@ def main(seed=None, run_num=0):
 
     if config.model_name.startswith("VGG"):
         model = vgg_model.VGG(
-            vgg_name=args.model_name,
-            dropout=args.dropout,
+            vgg_name=config.model_name,
+            dropout=config.dropout,
             num_classes=data_loader_manager.num_classes,
             vgg_config=config.config_dir / config.vgg_config,
         ).to(device)
-    elif config.model_name.startswith("ResNet20"):
-        if args.dataset == 'CIFAR100':
-            num_classes = 100
-        else:
-            num_classes = 10
-        depth = 20
-        n = (depth - 2) // 6
-        model = resnet_model.ResNet_cifar(resnet_model.BasicBlock, [n,n,n],num_classes,args.dropout).to(device)
+    elif config.model_name.startswith("ResNet"):
+        n = (config_model.depth - 2) // 6
+        model = resnet_model.ResNet_cifar(resnet_model.BasicBlock, [n,n,n],data_loader_manager.num_classes,args.dropout).to(device)
     elif config.model_name.startswith("ViT"):
 
         if args.dataset == 'CIFAR100':
@@ -135,16 +147,16 @@ def main(seed=None, run_num=0):
             num_classes = 10
 
         model = vit_model.ViT(
-        patch_height = 16,
-        patch_width = 16,
-        embedding_dims = 768,
-        dropout = args.dropout,
-        heads = 4,
-        num_layers = 4,
-        forward_expansion = 4,
-        max_len = int((32*32)/(16*16)),
-        layer_norm_eps = 1e-5,
-        num_classes = num_classes,
+        patch_height = config_model.patch_height,
+        patch_width = config_model.patch_width,
+        embedding_dims = config_model.embedding_dims,
+        dropout = config.dropout,
+        heads = config_model.heads,
+        num_layers = config_model.num_layers,
+        forward_expansion = config_model.forward_expansion,
+        max_len = config_model.max_len,
+        layer_norm_eps = config_model.layer_norm_eps,
+        num_classes = data_loader_manager.num_classes,
         ).to(device)
 
     else:
@@ -160,8 +172,11 @@ def main(seed=None, run_num=0):
 
     print("Random initialisation")
     save_model(model, save_file_name="initialisation", save_dir=config.models_dir)
-    model, training_sequence = trainer.train()
+    training_sequence,model  = trainer.train()
     save_model(model, config.save_name, config.models_dir)
+    with open('{save_name}.json', 'w') as f:
+        json.dump(training_sequence, f)
+    print("Finished")
     
 
 

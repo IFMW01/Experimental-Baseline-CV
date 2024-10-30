@@ -33,9 +33,3 @@ config_dir: ../configs
 
 cifar_dir: ../data/cifar
 imagenet_dir: ../data/imagenet
-
-wandb:
-  use_wandb: True
-  experiment_name: '' # overwritten in main.py
-  project: 'ViT_CIFAR_REDO_100'
-  entity: 'r252_project'
