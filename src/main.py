@@ -94,7 +94,7 @@ def main(seed=None, run_num=0):
     config.update(vars(args))
 
     pprint(config)
-
+    config_model = EasyDict(config_model) 
     config = EasyDict(config)
 
     config.models_dir = Path(config.models_dir) / config.dataset
@@ -137,7 +137,7 @@ def main(seed=None, run_num=0):
             vgg_config=config.config_dir / config.vgg_config,
         ).to(device)
     elif config.model_name.startswith("ResNet"):
-        n = (20 - 2) // 6
+        n = (config_model.depth - 2) // 6
         model = resnet_model.ResNet_cifar(resnet_model.BasicBlock, [n,n,n],data_loader_manager.num_classes,config.dropout).to(device)
     elif config.model_name.startswith("ViT"):
 
