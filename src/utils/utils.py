@@ -16,7 +16,6 @@ def actviation_distance(softmax_1, softmax_2):
     diff = torch.sqrt(torch.sum(torch.square(softmax_1 - softmax_2), axis = 1))
     return diff
 
-# JS DIST Metric Calculation
 def JS_divergence(softmax_1, softmax_2):
     softmax_1 = torch.tensor(np.array(softmax_1))
     softmax_2 = torch.tensor(np.array(softmax_2))
@@ -24,17 +23,19 @@ def JS_divergence(softmax_1, softmax_2):
     js = (0.5*F.kl_div(torch.log(softmax_1), diff) + 0.5*F.kl_div(torch.log(softmax_2), diff)).detach().cpu().item()
     return js
 
-
-def cosine_similarity(softmax1, softmax2):
+def cosine_similarity_func(softmax_1, softmax_2):
+    softmax_1 = torch.tensor(np.array(softmax_1))
+    softmax_2 = torch.tensor(np.array(softmax_2))
     return torch.nan_to_num(torch.clip(torch.dot(
-        softmax1, softmax2
+        softmax_1, softmax_2
     ) / (
-        torch.linalg.norm(softmax1)
-        * torch.linalg.norm(softmax2)
+        torch.linalg.norm(softmax_1)
+        * torch.linalg.norm(softmax_2)
     ),-1, 1),0)
 
 def vectorise_model(model):
     return Params2Vec(model.parameters())
+
 
 def cosine_similarity_weights(base_model, model_weights):
     base_vec = vectorise_model(base_model)
@@ -45,7 +46,6 @@ def cosine_similarity_weights(base_model, model_weights):
         torch.linalg.norm(base_vec)
         * torch.linalg.norm(model_vec)
     ),-1, 1),0)
-
 
 
 def global_prune_without_masks(model, amount):

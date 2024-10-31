@@ -74,8 +74,8 @@ def save_model(model, save_file_name, save_dir):
 
     full_save_dir = save_dir / f"{save_file_name}.pth"
     torch.save(
-        model,
-        full_save_dir,
+        model.state_dict(),
+        full_save_dir
     )
     print("-----------------")
     print(f"Model saved at: {full_save_dir}")
