@@ -2,6 +2,7 @@ import torch
 import torch.nn.utils.prune as prune
 import torch.nn.functional as F
 import numpy as np
+import torch.nn.utils.prune as prune
 from torch.nn.utils import parameters_to_vector as Params2Vec
 from torch.nn.utils import vector_to_parameters as VectorToParams
 from torch.nn.utils.prune import _validate_pruning_amount, _validate_pruning_amount_init, _compute_nparams_toprune
