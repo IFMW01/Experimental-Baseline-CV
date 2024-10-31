@@ -1,45 +1,52 @@
 import torch
 import torch.nn.utils.prune as prune
 import torch.nn.functional as F
+import numpy as np
 from torch.nn.utils import parameters_to_vector as Params2Vec
 from torch.nn.utils import vector_to_parameters as VectorToParams
 from torch.nn.utils.prune import _validate_pruning_amount, _validate_pruning_amount_init, _compute_nparams_toprune
 
-def intermediate_activations_dataloader(model,):
-    activations = {}
-    for name, layer in model.named_children():
-        layer.register_forward_hook(get_activation(name,activations))
-    input = torch.randn(1, 3, 224, 224) #for testing
-    output = model(input)
-    for layer_name, activation in activations.items():
-        print(f"{layer_name} activation shape: {activation.shape}")
-    
-
-def get_activation(name,activation):
-    def hook(model, input, output):
-        activation[name] = output.detach()
-    return hook
+def l1_distance(softmax_1,softmax_2):
+    l1_dist = np.sum(np.abs(softmax_1 - softmax_2), axis=1)
+    return l1_dist
 
 def actviation_distance(softmax_1, softmax_2):
+    softmax_1 = torch.tensor(np.array(softmax_1))
+    softmax_2 = torch.tensor(np.array(softmax_2))
     diff = torch.sqrt(torch.sum(torch.square(softmax_1 - softmax_2), axis = 1))
     return diff
 
 # JS DIST Metric Calculation
 def JS_divergence(softmax_1, softmax_2):
+    softmax_1 = torch.tensor(np.array(softmax_1))
+    softmax_2 = torch.tensor(np.array(softmax_2))
     diff = (softmax_1+softmax_2)/2 
     js = (0.5*F.kl_div(torch.log(softmax_1), diff) + 0.5*F.kl_div(torch.log(softmax_2), diff)).detach().cpu().item()
     return js
 
+
+def cosine_similarity(softmax1, softmax2):
+    return torch.nan_to_num(torch.clip(torch.dot(
+        softmax1, softmax2
+    ) / (
+        torch.linalg.norm(softmax1)
+        * torch.linalg.norm(softmax2)
+    ),-1, 1),0)
+
 def vectorise_model(model):
     return Params2Vec(model.parameters())
 
-def cosine_similarity(base_weights, model_weights):
+def cosine_similarity_weights(base_model, model_weights):
+    base_vec = vectorise_model(base_model)
+    model_vec = vectorise_model(model_weights)
     return torch.nan_to_num(torch.clip(torch.dot(
-        base_weights, model_weights
+        base_vec, model_vec
     ) / (
-        torch.linalg.norm(base_weights)
-        * torch.linalg.norm(model_weights)
+        torch.linalg.norm(base_vec)
+        * torch.linalg.norm(model_vec)
     ),-1, 1),0)
+
+
 
 def global_prune_without_masks(model, amount):
     parameters_to_prune = []
