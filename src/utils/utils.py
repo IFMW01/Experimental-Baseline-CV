@@ -13,7 +13,7 @@ def intermediate_activations_dataloader(model,):
     output = model(input)
     for layer_name, activation in activations.items():
         print(f"{layer_name} activation shape: {activation.shape}")
-    print()
+    
 
 def get_activation(name,activation):
     def hook(model, input, output):

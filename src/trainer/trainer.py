@@ -100,21 +100,18 @@ class Trainer():
             epoch_time = end_time - start_time
             training_time +=  round(epoch_time, 3)
 
-            
-            train_accuracy,train_loss,train_ece = self.evaluate(self.train_loader)
-            test_accuracy,test_loss, test_ece,predictions= self.evaluate_test(self.test_loader)
-
-            epoch_results['train accuracy'] = train_accuracy
-            epoch_results['train loss'] = train_loss
-            epoch_results['train ece'] = train_ece
-            epoch_results['test accuracy'] = test_accuracy
-            epoch_results['test loss'] = test_loss
-            epoch_results['test ece'] = test_ece
-            epoch_results['training time'] = training_time
-            epoch_results['function'] = predictions.to_numpy().tolist()
-            training_sequence[f'{epoch}'] = epoch_results
-
-            if  epoch%10==0:
+            if  epoch%10==0 or epoch==(self.n_epoch-1):
+                train_accuracy,train_loss,train_ece = self.evaluate(self.train_loader)
+                test_accuracy,test_loss, test_ece,predictions= self.evaluate_test(self.test_loader)
+                epoch_results['train accuracy'] = train_accuracy
+                epoch_results['train loss'] = train_loss
+                epoch_results['train ece'] = train_ece
+                epoch_results['test accuracy'] = test_accuracy
+                epoch_results['test loss'] = test_loss
+                epoch_results['test ece'] = test_ece
+                epoch_results['training time'] = training_time
+                epoch_results['function'] = predictions.to_numpy().tolist()
+                training_sequence[epoch] = epoch_results
                 print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
                 print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
 
