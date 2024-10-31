@@ -5,6 +5,21 @@ from torch.nn.utils import parameters_to_vector as Params2Vec
 from torch.nn.utils import vector_to_parameters as VectorToParams
 from torch.nn.utils.prune import _validate_pruning_amount, _validate_pruning_amount_init, _compute_nparams_toprune
 
+def intermediate_activations_dataloader(model,):
+    activations = {}
+    for name, layer in model.named_children():
+        layer.register_forward_hook(get_activation(name,activations))
+    input = torch.randn(1, 3, 224, 224) #for testing
+    output = model(input)
+    for layer_name, activation in activations.items():
+        print(f"{layer_name} activation shape: {activation.shape}")
+    print()
+
+def get_activation(name,activation):
+    def hook(model, input, output):
+        activation[name] = output.detach()
+    return hook
+
 def actviation_distance(softmax_1, softmax_2):
     diff = torch.sqrt(torch.sum(torch.square(softmax_1 - softmax_2), axis = 1))
     return diff
