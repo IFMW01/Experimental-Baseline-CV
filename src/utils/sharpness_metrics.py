@@ -413,31 +413,7 @@ class MetricsProcessor:
 
         # print("Neuronwise tracial measure is", trace_nm)
         # print("Neuronwise max eigenvalue measure is", maxeigen_nm)
-    
-    def IGS(self, output_all=False):
-        criterion = torch.nn.CrossEntropyLoss()
-        criterion_alldata = torch.nn.CrossEntropyLoss(reduction = 'none')
-        
-        IGS = []
-        
-        num_fails = 0
-        for X,y in tqdm(self.train_dataloader):
-            X = X.to(self.device)
-            y = y.to(self.device)
-            #experiment_fast(model, False, X,y,criterion, criterion_alldata)
-            IGS_dims, L, V, spurious_dim = calculate_IGS_largemodel(self.model, X, X,y,criterion, 1e-4,3,exact_fisher=True)
-            if len(IGS_dims)==3:
-                IGS.append(IGS_dims[-1])
-            else:
-                num_fails += 1
-                #print("Warning: IGS calculation incomplete, len =",len(IGS_dims))
-                 
-        if num_fails>len(IGS):
-            print("Warning: failed IGS calculation")
-        
-        if output_all:
-            return IGS
-        return np.array(IGS).mean()
+
 
     @torch.no_grad()
     def ece(self):
