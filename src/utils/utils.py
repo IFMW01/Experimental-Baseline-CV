@@ -7,14 +7,16 @@ from torch.nn.utils import vector_to_parameters as VectorToParams
 from torch.nn.utils.prune import _validate_pruning_amount, _validate_pruning_amount_init, _compute_nparams_toprune
 
 def l1_distance(softmax_1,softmax_2):
+    softmax_1 = np.array(softmax_1)
+    softmax_2 = np.array(softmax_2)
     l1_dist = np.sum(np.abs(softmax_1 - softmax_2), axis=1)
-    return l1_dist
+    return np.mean(l1_dist)
 
 def actviation_distance(softmax_1, softmax_2):
     softmax_1 = torch.tensor(np.array(softmax_1))
     softmax_2 = torch.tensor(np.array(softmax_2))
     diff = torch.sqrt(torch.sum(torch.square(softmax_1 - softmax_2), axis = 1))
-    return diff
+    return torch.mean(diff)
 
 def JS_divergence(softmax_1, softmax_2):
     softmax_1 = torch.tensor(np.array(softmax_1))
@@ -24,8 +26,8 @@ def JS_divergence(softmax_1, softmax_2):
     return js
 
 def cosine_similarity_func(softmax_1, softmax_2):
-    softmax_1 = torch.tensor(np.array(softmax_1))
-    softmax_2 = torch.tensor(np.array(softmax_2))
+    softmax_1 = torch.tensor(np.array(softmax_1)).flatten()
+    softmax_2 = torch.tensor(np.array(softmax_2)).flatten()
     return torch.nan_to_num(torch.clip(torch.dot(
         softmax_1, softmax_2
     ) / (
