@@ -49,7 +49,7 @@ def cosine_similarity_weights(base_model, model_weights):
         * torch.linalg.norm(model_vec)
     ),-1, 1),0)
 
-
+# amount is value between 0 and 1
 def global_prune_without_masks(model, amount):
     parameters_to_prune = []
     for mod in model.modules():
@@ -74,7 +74,7 @@ def global_prune_without_masks(model, amount):
                 prune.remove(mod, "bias")
     return model
 
-
+# amount is value between 0 and 1
 def global_prune_with_masks(model, amount):
     parameters_to_prune = []
     for mod in model.modules():
