@@ -42,8 +42,8 @@ def JS_divergence(softmax_1, softmax_2):
     softmax_2 = torch.tensor(np.array(softmax_2))
     _softmax_1 = softmax_1 / norm(softmax_1, ord=1)
     _softmax_2 = softmax_2 / norm(softmax_2, ord=1)
-    _diff = 0.5 * (_softmax_1 + __softmax_2)
-    return (0.5 * (entropy(_softmax_1, _diff) + entropy(__softmax_2, _diff))).mean()
+    _diff = 0.5 * (_softmax_1 + _softmax_2)
+    return (0.5 * (entropy(_softmax_1, _diff) + entropy(_softmax_2, _diff))).mean()
     
 
 def cosine_similarity_func(softmax_1, softmax_2):
@@ -54,7 +54,7 @@ def cosine_similarity_func(softmax_1, softmax_2):
     ) / (
         torch.linalg.norm(softmax_1)
         * torch.linalg.norm(softmax_2)
-    ),-1, 1),0)
+    ),-1, 1),0).detach().cpu().item()
 
 def vectorise_model(model):
     return Params2Vec(model.parameters())
