@@ -85,6 +85,7 @@ class DataLoaderManagerCIFAR:
             train_dataset,
             batch_size=self.config.batch_size,
             shuffle=True,
+            num_workers = 4,
             worker_init_fn=self.seed_worker,
             generator=g,
         )
@@ -92,6 +93,7 @@ class DataLoaderManagerCIFAR:
         test_dataloader = torch.utils.data.DataLoader(
             eval_dataset,
             batch_size=self.config.batch_size,
+            num_workers = 4,
             shuffle=False,
             worker_init_fn=self.seed_worker,
             generator=g,

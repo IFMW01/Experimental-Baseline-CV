@@ -100,7 +100,7 @@ class Trainer():
             epoch_time = end_time - start_time
             training_time +=  round(epoch_time, 3)
 
-            if  epoch%10==0 or epoch==(self.n_epoch-1):
+            if  epoch%1==0 or epoch==(self.n_epoch-1):
                 train_accuracy,train_loss,train_ece = self.evaluate(self.train_loader)
                 test_accuracy,test_loss, test_ece,predictions= self.evaluate_test(self.test_loader)
                 epoch_results['train accuracy'] = train_accuracy

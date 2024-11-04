@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 import torch.nn.utils.prune as prune
 import torch.nn.functional as F
 import numpy as np
@@ -6,6 +7,23 @@ import torch.nn.utils.prune as prune
 from torch.nn.utils import parameters_to_vector as Params2Vec
 from torch.nn.utils import vector_to_parameters as VectorToParams
 from torch.nn.utils.prune import _validate_pruning_amount, _validate_pruning_amount_init, _compute_nparams_toprune
+from scipy.stats import entropy
+from numpy.linalg import norm
+
+def get_function(model,data_loader,num_classes):
+    dict = {}
+    for i in range(0,num_classes):
+        dict[i] = []
+    model.eval()
+    for index, (image,lable) in enumerate(data_loader):
+        with torch.no_grad():
+            output = model(image)
+            output = output.detach().numpy()[0]
+            output = output.tolist()
+            output = np.array(output)
+            dict[lable.numpy()[0]].append(output)
+    return dict
+    
 
 def l1_distance(softmax_1,softmax_2):
     softmax_1 = np.array(softmax_1)
@@ -22,9 +40,11 @@ def actviation_distance(softmax_1, softmax_2):
 def JS_divergence(softmax_1, softmax_2):
     softmax_1 = torch.tensor(np.array(softmax_1))
     softmax_2 = torch.tensor(np.array(softmax_2))
-    diff = (softmax_1+softmax_2)/2 
-    js = (0.5*F.kl_div(torch.log(softmax_1), diff) + 0.5*F.kl_div(torch.log(softmax_2), diff)).detach().cpu().item()
-    return js
+    _softmax_1 = softmax_1 / norm(softmax_1, ord=1)
+    _softmax_2 = softmax_2 / norm(softmax_2, ord=1)
+    _diff = 0.5 * (_softmax_1 + __softmax_2)
+    return (0.5 * (entropy(_softmax_1, _diff) + entropy(__softmax_2, _diff))).mean()
+    
 
 def cosine_similarity_func(softmax_1, softmax_2):
     softmax_1 = torch.tensor(np.array(softmax_1)).flatten()
