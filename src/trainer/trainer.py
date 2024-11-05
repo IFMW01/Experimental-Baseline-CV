@@ -79,8 +79,6 @@ class Trainer():
         train_ece = 0 
         test_ece = 0
         training_time = 0
-        epoch_results = {}
-        training_sequence = {}
         for epoch in tqdm(range(0, self.n_epoch)):
             epoch_time = 0
             start_time = time.time()
@@ -100,7 +98,8 @@ class Trainer():
             epoch_time = end_time - start_time
             training_time +=  round(epoch_time, 3)
 
-            if  epoch%1==0 or epoch==(self.n_epoch-1):
+            if  epoch%1==2 or epoch==(self.n_epoch-1):
+                epoch_results = {}
                 train_accuracy,train_loss,train_ece = self.evaluate(self.train_loader)
                 test_accuracy,test_loss, test_ece,predictions= self.evaluate_test(self.test_loader)
                 epoch_results['train accuracy'] = train_accuracy
