@@ -205,11 +205,15 @@ def save_model(model, save_file_name, save_dir):
 
 
 def main(args,run_num=0):
-    
+    print("-----------------")
+    print(f"Experirmental Setup:")
+    print("-----------------")
+    for key, value in vars(args).items():
+        print(f"{key}: {value}")
+    print("-----------------")
+
     with open(args.model_config, "r") as file:
         config_model = yaml.safe_load(file)
-
-    pprint(args)
     config_model = EasyDict(config_model) 
 
     args.models_dir = Path(args.models_dir) / args.dataset
