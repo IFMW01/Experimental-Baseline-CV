@@ -22,28 +22,149 @@ import models.vit as vit_model
 
 def options_parser():
     parser = argparse.ArgumentParser(description="Arguments for creating model")
+
+    # Required arguments
     parser.add_argument(
-        "--config_file",
+        "--dataset",
         required=True,
         type=str,
-        help="Path to config file",
+        help="Datraset to train on (CIFAR10 or CIFAR100)",
     )
+
     parser.add_argument(
-        "--model_config",
-        required=True,
-        type=str,
-        help="Save Name of project",
+    "--model_name",
+    required=True,
+    type=str,
+    help="VGG, ResNet or ViT ",
     )
+   
+    parser.add_argument(
+        "--seed",
+        required=True,
+        type=int,
+        help="Seed to train on"
+    )
+
+    parser.add_argument(
+        "--num_epochs",
+        required=True,
+        type=int,
+        help="Seed to train on"
+    )
+
     parser.add_argument(
         "--save_name",
         required=True,
         type=str,
-        help="Save Name of project",
+        help="Project Name"
+    )
+
+    parser.add_argument(
+        "--model_config",
+        required=True,
+        type=str,
+        help="Path to model config",
+    )
+
+    parser.add_argument(
+        "--models_dir",
+        required=False,
+        type=str,
+        default = "./models",
+        help="Directory to save models to."
+    )
+
+    parser.add_argument(
+        "--data_dir",
+        required=False,
+        type=str,
+        default = "./data/cifar",
+        help="Data directory (Change when not using CIFAR)"
+    )
+
+    # Optional arguments
+    parser.add_argument(
+        "--batch_size",
+        required=False,
+        type=int,
+        default = 256,
+        help="Batch size to train on"
+    )
+
+    parser.add_argument(
+        "--learning_rate",
+        required=False,
+        type=int,
+        default = 0.01,
+        help="Learning rate"
     )
 
 
-    args = parser.parse_args()
+    parser.add_argument(
+        "--optimizer",
+        required=False,
+        type=str,
+        default = "SGD",
+        help="Optimizer (SGD,Adam)"
+    )
 
+    parser.add_argument(
+        "--momentum",
+        required=False,
+        type=int,
+        default = 0.9,
+        help="Value for momentum"
+    )
+
+
+    parser.add_argument(
+        "--criterion",
+        required=False,
+        type=str,
+        default = "Cross-entropy",
+        help="Loss metric"
+    )
+
+    parser.add_argument(
+        "--dropout",
+        required=False,
+        type=int,
+        default = 0.0,
+        help="Dropout  value"
+    )
+
+    parser.add_argument(
+        "--weight_decay",
+        required=False,
+        type=int,
+        default = 0.0,
+        help="Weight decay value (suggested 1e-4)"
+    )
+
+    parser.add_argument(
+        "--aug",
+        required=False,
+        type=bool,
+        default = False,
+        help="Augmentation (True/False)"
+    )
+
+    parser.add_argument(
+        "--config_dir",
+        required=False,
+        type=str,
+        default = "./configs",
+        help="Config Directory"
+    )
+
+    parser.add_argument(
+        "--vgg_config",
+        required=False,
+        type=str,
+        default = "vgg_config.json",
+        help="VGG config"
+    )
+    args = parser.parse_args()
     return args
 
 
@@ -83,70 +204,61 @@ def save_model(model, save_file_name, save_dir):
     print("-----------------")
 
 
-def main(seed=None, run_num=0):
-    args = options_parser()
-
-    with open(args.config_file, "r") as file:
-        config = yaml.safe_load(file)
+def main(args,run_num=0):
     
     with open(args.model_config, "r") as file:
         config_model = yaml.safe_load(file)
 
-    config.update(vars(args))
-
-    pprint(config)
+    pprint(args)
     config_model = EasyDict(config_model) 
-    config = EasyDict(config)
 
-    config.models_dir = Path(config.models_dir) / config.dataset
+    args.models_dir = Path(args.models_dir) / args.dataset
 
-    config.models_dir = (
-        config.models_dir / args.save_name / str(seed)
+    args.models_dir = (
+        args.models_dir / args.save_name / str(args.seed)
     )
 
-    config.config_dir = Path(config.config_dir)
+    args.config_dir = Path(args.config_dir)
 
-    config.seed = seed if seed is not None else config.seed
-
-    set_seed(seed)
+    set_seed(args.seed)
     device = get_device()
 
     print("Loading model")
 
-    if "CIFAR" in config.dataset:
+    if "CIFAR" in args.dataset:
         data_loader_manager = CIFAR_dataloader.DataLoaderManagerCIFAR(
-            config=config,
-            dataset_name=config.dataset,
-            seed=seed,
+            config=args,
+            dataset_name=args.dataset,
+            seed=args.seed,
         )
-    elif "ImageNet" in config.dataset:
+    elif "ImageNet" in args.dataset:
         data_loader_manager = IMAGENET_dataloader.DataLoaderManagerImageNet(
-            config=config,
-            dataset_name=config.dataset,
-            seed=seed,
+            config=args,
+            dataset_name=args.dataset,
+            seed=args.seed,
         )
 
-    print(f"Loading: {config.dataset}:")
+    print(f"Loading: {args.dataset}:")
 
     train_dataloader, test_dataloader = data_loader_manager.get_dataloaders()
 
-    if config.model_name.startswith("VGG"):
+    if args.model_name.startswith("VGG"):
         model = vgg_model.VGG(
-            vgg_name=config.model_name,
-            dropout=config.dropout,
+            vgg_name=args.model_name,
+            dropout=args.dropout,
             num_classes=data_loader_manager.num_classes,
-            vgg_config=config.config_dir / config.vgg_config,
+            vgg_config=args.config_dir / args.vgg_config,
         ).to(device)
-    elif config.model_name.startswith("ResNet"):
+    elif args.model_name.startswith("ResNet"):
         n = (config_model.depth - 2) // 6
-        model = resnet_model.ResNet_cifar(resnet_model.BasicBlock, [n,n,n],data_loader_manager.num_classes,config.dropout).to(device)
-    elif config.model_name.startswith("ViT"):
+        model = resnet_model.ResNet_cifar(resnet_model.BasicBlock, [n,n,n],data_loader_manager.num_classes,args.dropout).to(device)
+    elif args.model_name.startswith("ViT"):
 
         model = vit_model.ViT(
         patch_height = config_model.patch_height,
         patch_width = config_model.patch_width,
         embedding_dims = config_model.embedding_dims,
-        dropout = config.dropout,
+        dropout = args.dropout,
         heads = config_model.heads,
         num_layers = config_model.num_layers,
         forward_expansion = config_model.forward_expansion,
@@ -156,19 +268,19 @@ def main(seed=None, run_num=0):
         ).to(device)
 
     else:
-        raise NotImplementedError(f"Model {config.model_name} not implemented")
+        raise NotImplementedError(f"Model {args.model_name} not implemented")
     
-    learning_rate = config.learning_rate
-    momentum = config.momentum
-    if 'Cross-entropy' in config.criterion:
+    learning_rate = args.learning_rate
+    momentum = args.momentum
+    if 'Cross-entropy' in args.criterion:
         criterion = torch.nn.CrossEntropyLoss()
-    elif 'MSE' in config.criterion:
+    elif 'MSE' in args.criterion:
         criterion = torch.nn.MSELoss
     else:
         raise ValueError("Only Cross-entropy and MSE are supported")
-    if 'SGD' in config.optimizer:
+    if 'SGD' in args.optimizer:
         optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
-    elif 'Adam' in config.optimizer:
+    elif 'Adam' in args.optimizer:
          optimizer = optim.Adam(model.parameters(), lr=learning_rate, momentum=momentum)
     else:
         raise ValueError("Only SGD and Adam are supported")
@@ -180,15 +292,15 @@ def main(seed=None, run_num=0):
         optimizer = optimizer,
         criterion = criterion,
         device = device,
-        n_epoch = config.num_epochs,
+        n_epoch = args.num_epochs,
         n_classes = data_loader_manager.num_classes
     )
 
     print("Random initialisation")
-    save_model(model, save_file_name="initialisation", save_dir=config.models_dir)
+    save_model(model, save_file_name="initialisation", save_dir=args.models_dir)
     training_sequence,model  = trainer.train()
-    save_model(model, config.save_name, config.models_dir)
-    with open(f'{config.models_dir}/{config.save_name}.json', 'w') as f:
+    save_model(model, args.save_name, args.models_dir)
+    with open(f'{args.models_dir}/{args.save_name}.json', 'w') as f:
         json.dump(training_sequence, f)
     print("Finished")
     
@@ -197,10 +309,4 @@ def main(seed=None, run_num=0):
 if __name__ == "__main__":
     args = options_parser()
 
-    with open(args.config_file, "r") as file:
-        config = yaml.safe_load(file)
-    config.update(vars(args))
-    seeds = config["seed"]
-    # seeds = [43, 91, 17]
-    for seed in seeds:
-        main(seed)
+    main(args)

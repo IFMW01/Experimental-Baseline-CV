@@ -60,14 +60,14 @@ class DataLoaderManagerCIFAR:
         # else:
         print("Loading normal train data")
         train_dataset = self.dataset(
-            root=self.config.cifar_dir,
+            root=self.config.data_dir,
             train=True,
             download=True,
             transform=self.aug_transformations if self.config.aug else self.base_transformations,
         )
 
         eval_dataset = self.dataset(
-            root=self.config.cifar_dir,
+            root=self.config.data_dir,
             train=False,
             download=True,
             transform=self.base_transformations,
